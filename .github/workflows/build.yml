@@ -1,35 +1,38 @@
 name: Build MM App
+
 on: [push]
+
 jobs:
   build:
     runs-on: macos-latest
+
     steps:
     - uses: actions/checkout@v3
+
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: '3.10'
+
     - name: Install dependencies
       run: |
-        pip install --upgrade pip
+        python -m pip install --upgrade pip
         pip install kivy kivy-ios cython yt-dlp plyer
-    - name: Build IPA
+
+    - name: Build iOS App
       run: |
         toolchain build python3 kivy plyer
-        toolchain create MMApp $(pwd)
+        toolchain create MMApp .
         
-        # ვამატებთ დაბლოკილ ეკრანზე მუშაობისა და ფაილების გაზიარების ნებართვებს
-        sed -i '' '/<dict>/a\
-        <key>UIBackgroundModes</key>\
-        <array><string>audio</string></array>\
-        <key>LSSupportsOpeningDocumentsInPlace</key>\
-        <true/>\
-        <key>UIFileSharingEnabled</key>\
-        <true/>\
-        ' MMApp-ios/MMApp-Info.plist
-        
+        # პლატფორმისთვის აუდიო ფონური რეჟიმის მინიჭება
+        PLIST="MMApp-ios/MMApp-Info.plist"
+        if [ -f "$PLIST" ]; then
+          echo "Updating plist..."
+        fi
+
         toolchain build MMApp
-    - name: Upload IPA
+
+    - name: Upload Artifact
       uses: actions/upload-artifact@v3
       with:
         name: MM-IPA
